@@ -1,3 +1,9 @@
 .profile.d
+.buildpack
+.nix-*
 .vagrant
+bin
+run_proot.sh
+nix-mnt
+secrets.sh
 .DS_Store
