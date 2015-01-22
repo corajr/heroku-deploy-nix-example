@@ -11,6 +11,18 @@ NIX_S3_KEY=...
 NIX_S3_SECRET=...
 NIX_S3_BUCKET=...
 ```
+## Deployment
+
+### Vagrant
+The first time, clone heroku-buildpack-nix-proot into the directory above:
+```bash
+pushd ..
+git clone https://github.com/chrisjr/heroku-buildpack-nix-proot.git
+popd
+```
+
+(You can put the buildpack wherever you like, just edit the Vagrantfile's
+synced folder accordingly.)
 
 To test using Vagrant:
 ```bash
@@ -21,6 +33,13 @@ vagrant ssh
 bash /vagrant/do_build
 ```
 
+The BUILD_DIR (contents of the slug) will be copied to the 'build' directory,
+so you can examine it from the outside OS.
+
+If the VM's already running and you'd like to try a change, replace `vagrant up` with 
+`vagrant reload --provision`.
+
+### Heroku
 To deploy directly to Heroku:
 ```bash
 source secrets

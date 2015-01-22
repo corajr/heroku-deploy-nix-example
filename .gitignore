@@ -3,6 +3,7 @@
 .nix-*
 .vagrant
 bin
+build
 run_proot.sh
 nix-mnt
 secrets.sh
