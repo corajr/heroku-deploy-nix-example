@@ -24,7 +24,7 @@ cat <<EOF > /tmp/build/do_build
 source /vagrant/build/bin/script-common
 export_env_dir /tmp/env
 source /vagrant/build/.profile.d/000_nix.sh
-build
+bash /vagrant/build/bin/build
 EOF
 
 chmod a+x /tmp/build/do_build
