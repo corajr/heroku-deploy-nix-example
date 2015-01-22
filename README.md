@@ -3,7 +3,9 @@ This is an example for Nix deployment to Heroku using the
 buildpack. See that buildpack for more general instructions.
 
 This repo also includes a Vagrantfile for local testing on a similar environment
-to the deprecated "cedar" stack.
+to the deprecated "cedar" stack. This has the benefit that a binary closure
+will be generated on your local machine with no time limit; this closure
+can be downloaded by Heroku without having to run a one-off build dyno.
 
 Create your `secrets` file with the S3 credentials like this:
 ```
