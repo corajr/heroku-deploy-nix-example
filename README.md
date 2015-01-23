@@ -2,7 +2,8 @@ This is an example for Nix deployment to Heroku using the
 [heroku-buildpack-nix-proot](http://github.com/chrisjr/heroku-buildpack-nix-proot)
 buildpack. See that buildpack for more general instructions.
 
-Dokku can be used for a local test environment.
+Dokku can be used for a local test environment. A `.env` file has been included
+to set the buildpack appropriately.
 
 To start, create a `secrets.sh` file with your S3 credentials like this:
 ```
@@ -10,6 +11,10 @@ export NIX_S3_KEY=...
 export NIX_S3_SECRET=...
 export NIX_S3_BUCKET=...
 ```
+
+I suggest you deploy locally on Dokku first to build a binary closure that will
+be uploaded to S3. Deploying to Heroku will then pick up the remote closure
+and run much faster.
 
 ## Deployment
 
@@ -37,11 +42,14 @@ APP_NAME=deploy_nix
 ssh dokku@dokku.me config:set $APP_NAME \
                   NIX_S3_KEY=$NIX_S3_KEY \
                   NIX_S3_SECRET=$NIX_S3_SECRET \
-                  NIX_S3_BUCKET=$NIX_S3_BUCKET
+                  NIX_S3_BUCKET=$NIX_S3_BUCKET \
+                  NIX_BUILD_ON_PUSH=1
 git remote add dokku dokku@dokku.me:$APP_NAME
 git push dokku master
-ssh dokku@dokku.me dokku run $APP_NAME build
 ```
+
+If you wish, you can omit NIX_BUILD_ON_PUSH above
+and instead manually run `ssh dokku@dokku.me run $APP_NAME build`.
 
 ### Heroku
 To deploy directly to Heroku:
