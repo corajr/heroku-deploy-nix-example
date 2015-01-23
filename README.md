@@ -2,64 +2,74 @@ This is an example for Nix deployment to Heroku using the
 [heroku-buildpack-nix-proot](http://github.com/chrisjr/heroku-buildpack-nix-proot)
 buildpack. See that buildpack for more general instructions.
 
-This repo also includes a Vagrantfile for local testing on a similar environment
-to the deprecated "cedar" stack. This has the benefit that a binary closure
-will be generated on your local machine with no time limit; this closure
-can be downloaded by Heroku without having to run a one-off build dyno.
+Dokku can be used for a local test environment.
 
-Create your `secrets` file with the S3 credentials like this:
+To start, create a `secrets.sh` file with your S3 credentials like this:
 ```
-NIX_S3_KEY=...
-NIX_S3_SECRET=...
-NIX_S3_BUCKET=...
+export NIX_S3_KEY=...
+export NIX_S3_SECRET=...
+export NIX_S3_BUCKET=...
 ```
+
 ## Deployment
 
-### Vagrant
-The first time, clone heroku-buildpack-nix-proot into the directory above:
-```bash
-pushd ..
-git clone https://github.com/chrisjr/heroku-buildpack-nix-proot.git
-popd
-```
+### Dokku
 
-(You can put the buildpack wherever you like, just edit the Vagrantfile's
-synced folder accordingly.)
+Easiest to set up [Dokku using Vagrant](http://progrium.viewdocs.io/dokku/installation#user-content-install-dokku-using-vagrant).
 
-To test using Vagrant:
+(Note: As of 2015-01-23, you should ignore the advice to set the port in ~/.ssh/config.)
+
+You will need to change the mode of apparmor (installed by Docker) to allow proot to work.
+
+Enter your Dokku folder and type:
 ```bash
-vagrant up
 vagrant ssh
-
-# on virtual machine
-bash /vagrant/do_build
+# on vm
+sudo apt-get install apparmor-utils
+sudo aa-complain /etc/apparmor.d/docker
 ```
 
-The BUILD_DIR (contents of the slug) will be copied to the 'build' directory,
-so you can examine it from the outside OS.
+Then, in this repo:
 
-If the VM's already running and you'd like to try a change, replace `vagrant up` with 
-`vagrant reload --provision`.
+```bash
+source secrets.sh
+APP_NAME=deploy_nix
+ssh dokku@dokku.me config:set $APP_NAME \
+                  NIX_S3_KEY=$NIX_S3_KEY \
+                  NIX_S3_SECRET=$NIX_S3_SECRET \
+                  NIX_S3_BUCKET=$NIX_S3_BUCKET
+git remote add dokku dokku@dokku.me:$APP_NAME
+git push dokku master
+ssh dokku@dokku.me dokku run $APP_NAME build
+```
 
 ### Heroku
 To deploy directly to Heroku:
+
 ```bash
-source secrets
+source secrets.sh
 heroku create -b http://github.com/chrisjr/heroku-buildpack-nix-proot
 heroku config:set NIX_S3_KEY=$NIX_S3_KEY \
                   NIX_S3_SECRET=$NIX_S3_SECRET \
                   NIX_S3_BUCKET=$NIX_S3_BUCKET
 git push heroku master
-# wait for initial Nix install...
+# wait for Nix install...
+```
 
+If you use the Dokku method above, a binary closure will already be saved
+that Heroku can pick up without needing to use up dyno hours building.
+
+If not, you can build remotely as follows:
+
+```bash
 heroku run build
-# this actually builds the closure and uploads it to S3
-# for a larger app, you'd need `heroku run -s PX build`
+# for a larger app, you may need `heroku run -s PX build`
 
 # final deploy
 git commit --amend --no-edit
 git push -f heroku master
 ```
 
-Since this app is small, you can also run `heroku config:set NIX_BUILD_ON_PUSH=1`
-and only do the first `git push heroku master`.
+If you wish to recompile when pushing changes directly to Heroku,
+you can set `heroku config:set NIX_BUILD_ON_PUSH=1`. (This might make
+more sense on dokku, since it will not run out of time.)
